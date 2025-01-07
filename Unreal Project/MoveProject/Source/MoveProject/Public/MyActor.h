@@ -15,7 +15,8 @@ public:
 	// Sets default values for this actor's properties
 	AMyActor();
 	int32 step();
-	void MoveCharacter(FVector Movement);
+	FVector MoveCharacter(FVector Movement);
+	int32 createEvent(); 
 
 protected:
 	// Called when the game starts or when spawned

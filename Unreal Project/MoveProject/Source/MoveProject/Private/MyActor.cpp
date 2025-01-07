@@ -15,7 +15,7 @@ int32 AMyActor::step()
 	return FMath::RandRange(0, 1);
 }
 
-void AMyActor::MoveCharacter(FVector Movement)
+FVector AMyActor::MoveCharacter(FVector Movement)
 {
 	//현재 플레이어 캐릭터 참조 가져오기 
 	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
@@ -33,8 +33,26 @@ void AMyActor::MoveCharacter(FVector Movement)
 
 		// 캐릭터의 위치 출력
 		UE_LOG(LogTemp, Warning, TEXT("New Character Location: (%f, %f, %f)"), NewLocation.X, NewLocation.Y, NewLocation.Z);
+
+		return NewLocation;
 	}
 
+	return FVector(0, 0, 0);
+
+	
+}
+
+int32 AMyActor::createEvent()
+{
+	int32 probability = FMath::RandRange(0, 100);
+	int32 count = 0;
+	if (probability >= 50)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Event occurred!"));
+		count++;
+	}
+	
+	return count;
 }
 
 
@@ -63,7 +81,8 @@ void AMyActor::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 	
 	static float AccumulatedTime = 0.0f; // 누적 시간
-	static int32 Count = 0; // 이벤트 횟수
+	static int32 Count = 0; // 이동 횟수
+	static int32 event_count = 0; // 이벤트 발생 횟수
 
 	AccumulatedTime += DeltaTime; // DeltaTime 누적
 
@@ -71,15 +90,38 @@ void AMyActor::Tick(float DeltaTime)
 	{
 		AccumulatedTime = 0.0f; // 시간 초기화
 
-		if (Count <= 10)
+
+		if (Count < 10)
 		{
 			int32 X = step();
 			int32 Y = step();
 			FVector Movement = FVector(X, Y, 0);
+			
 			UE_LOG(LogTemp, Warning, TEXT("(X, Y): (%d, %d)"), X, Y);
+			
+			// 거리 구하기 추가
+			float one_distance = FMath::Sqrt(static_cast<float>(X) * static_cast<float>(X) + static_cast<float>(Y) * static_cast<float>(Y));
+			UE_LOG(LogTemp, Warning, TEXT("Move distance: %f"), one_distance);
+			
+		//	int32 event_count = createEvent();
+		//	UE_LOG(LogTemp, Warning, TEXT("Event count: %d"), event_count);
+			if (createEvent())
+			{
+				event_count++;
+			}
 
-			MoveCharacter(Movement);
+			FVector current_pos = MoveCharacter(Movement);
 			Count++;
+
+			if (Count == 10)
+			{
+				float dx = current_pos.X - 0;
+				float dy = current_pos.Y - 0;
+				float sum_distance = FMath::Sqrt(dx * dx + dy * dy);
+				UE_LOG(LogTemp, Warning, TEXT("Event count: %d"), event_count);
+				UE_LOG(LogTemp, Warning, TEXT("Sum of Distance: %f"), sum_distance);
+
+			}
 
 			//UE_LOG(LogTemp, Warning, TEXT("Step %d: X=%d, Y=%d"), Count, X, Y);
 		}
