@@ -8,7 +8,7 @@
 
 int32 AMyActor::step()
 {
-	// 시드 설정
+	// 시드 설정 -> Begin에서
 	//FMath::RandInit(FDateTime::Now().GetMillisecond());
 
 	// 랜덤 값 반환	
@@ -17,8 +17,7 @@ int32 AMyActor::step()
 
 FVector AMyActor::MoveCharacter(FVector Movement)
 {
-	//현재 플레이어 캐릭터 참조 가져오기 
-	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+
 
 	if (PlayerCharacter)
 	{
@@ -31,15 +30,42 @@ FVector AMyActor::MoveCharacter(FVector Movement)
 		// 캐릭터의 새로운 위치 설정
 		PlayerCharacter->SetActorLocation(NewLocation);
 
-		// 캐릭터의 위치 출력
-		UE_LOG(LogTemp, Warning, TEXT("New Character Location: (%f, %f, %f)"), NewLocation.X, NewLocation.Y, NewLocation.Z);
-
 		return NewLocation;
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("No player character found"));
 	return FVector(0, 0, 0);
 
 	
+}
+
+void AMyActor::displayPosition(int32 X, int32 Y)
+{
+	if (PlayerCharacter)
+	{
+		// 플레이어 캐릭터 존재 -> 현재 위치 가져오기
+		FVector CurrentLocation = PlayerCharacter->GetActorLocation();
+
+		UE_LOG(LogTemp, Warning, TEXT("Current Character Location: (%f, %f, %f)"), CurrentLocation.X, CurrentLocation.Y, CurrentLocation.Z);
+		UE_LOG(LogTemp, Warning, TEXT("Step Position (X, Y): (%d, %d)"), X, Y);
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No player character found"));
+	}
+}
+
+float AMyActor::Distance(const FVector& Start, const FVector& End)
+{
+	float dx = End.X - Start.X;
+	float dy = End.Y - Start.Y;
+	return FMath::Sqrt(dx * dx + dy * dy);
+}
+
+void AMyActor::Notify(int32 EventCount, float SumDistance)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Event count: %d"), EventCount);
+    UE_LOG(LogTemp, Warning, TEXT("Sum of Distance: %f"), SumDistance);
 }
 
 int32 AMyActor::createEvent()
@@ -69,7 +95,14 @@ AMyActor::AMyActor()
 void AMyActor::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	// 이젠 BeginPlay() 함수에서 한 번만 플레이어 캐릭터를 가져오면 된다.
+	PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("No player character found"));
+	}
+
 	// 시드를 한 번만 초기화
 	FMath::RandInit(FDateTime::Now().GetMillisecond());
 		
@@ -97,11 +130,7 @@ void AMyActor::Tick(float DeltaTime)
 			int32 Y = step();
 			FVector Movement = FVector(X, Y, 0);
 			
-			UE_LOG(LogTemp, Warning, TEXT("(X, Y): (%d, %d)"), X, Y);
 			
-			// 거리 구하기 추가
-			float one_distance = FMath::Sqrt(static_cast<float>(X) * static_cast<float>(X) + static_cast<float>(Y) * static_cast<float>(Y));
-			UE_LOG(LogTemp, Warning, TEXT("Move distance: %f"), one_distance);
 			
 		//	int32 event_count = createEvent();
 		//	UE_LOG(LogTemp, Warning, TEXT("Event count: %d"), event_count);
@@ -111,15 +140,20 @@ void AMyActor::Tick(float DeltaTime)
 			}
 
 			FVector current_pos = MoveCharacter(Movement);
+			// 거리 구하기 추가
+			float one_distance = Distance(FVector(0, 0, 0), Movement);
+			UE_LOG(LogTemp, Warning, TEXT("Move distance: %f"), one_distance);
+			
+			// 위치 출력
+			displayPosition(X, Y);
+
 			Count++;
 
 			if (Count == 10)
 			{
-				float dx = current_pos.X - 0;
-				float dy = current_pos.Y - 0;
-				float sum_distance = FMath::Sqrt(dx * dx + dy * dy);
-				UE_LOG(LogTemp, Warning, TEXT("Event count: %d"), event_count);
-				UE_LOG(LogTemp, Warning, TEXT("Sum of Distance: %f"), sum_distance);
+
+				float sum_distance = Distance(FVector(0, 0, 0), current_pos);
+				Notify(event_count, sum_distance);
 
 			}
 

@@ -18,6 +18,10 @@ public:
 	FVector MoveCharacter(FVector Movement);
 	int32 createEvent(); 
 
+	void displayPosition(int32 X, int32 Y);
+	float Distance(const FVector& Start, const FVector& End);
+	void Notify(int32 EventCount, float SumDistance);
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -26,4 +30,6 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+private:
+	ACharacter* PlayerCharacter;
 };
